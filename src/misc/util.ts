@@ -76,6 +76,50 @@ export function locationToString(loc: Location | null | undefined, withFilename:
     return file + (file && start ? ":" : "") + start + end + extra + native;
 }
 
+export function locationToJsonString(loc: Location | null | undefined, withFilename: boolean = false, withEnd: boolean = false, useModuleName?: boolean) {
+    if (!loc)
+        return "{}";
+    const start = loc.start && loc.start.line !== 0 ? `${loc.start.line}:${loc.start.column + 1}` : "";
+    const end = withEnd && loc.end && loc.end.line !== 0 ? `:${loc.end.line}:${loc.end.column + 1}` : "";
+    const extra = "nodeIndex" in loc ? `$${loc.nodeIndex}` : ""; // for uniquely naming AST nodes with missing source location
+    const native = loc.native ?? "";
+    const file =
+    withFilename ?
+    useModuleName ?
+    "module" in loc ? loc.module?.toString() : "" :
+    "filename" in loc ? loc.filename : "?" :
+    "";
+    return JSON.stringify({
+        start: start,
+        end: end,
+        nodeIndex: extra,
+        native: native,
+        file: file
+    });
+}
+
+export function locationToJson(loc: Location | null | undefined, withFilename: boolean = false, withEnd: boolean = false, useModuleName?: boolean) {
+    if (!loc)
+        return "{}";
+    const start = loc.start;
+    const end = withEnd && loc.end;
+    const extra = "nodeIndex" in loc ? `$${loc.nodeIndex}` : ""; // for uniquely naming AST nodes with missing source location
+    const native = loc.native ?? "";
+    const file =
+    withFilename ?
+    useModuleName ?
+    "module" in loc ? loc.module?.toString() : "" :
+    "filename" in loc ? loc.filename : "?" :
+    "";
+    return {
+        start: start,
+        end: end,
+        nodeIndex: extra,
+        native: native,
+        file: file
+    };
+}
+
 /**
  * Returns a string representation of the given source location, including filename.
  */

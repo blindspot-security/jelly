@@ -87,7 +87,7 @@ export class AnalysisStateReporter {
             const fileIndex = fileIndices.get(fun instanceof ModuleInfo ? fun : fun.moduleInfo);
             if (fileIndex === undefined)
                 assert.fail(`File index not found for ${fun}`);
-            fs.writeSync(fd, `${first ? "" : ","}\n  "${funIndex}": ${JSON.stringify(makeLocStr(fileIndex, fun.node?.loc))}`);
+            fs.writeSync(fd, `${first ? "" : ","}\n  "${funIndex}": [${JSON.stringify(makeLocStr(fileIndex, fun.node?.loc))}, ${fun.toJsonString()}]`);
             first = false;
         }
         fs.writeSync(fd, `\n },\n "calls": {`);
@@ -113,12 +113,12 @@ export class AnalysisStateReporter {
                 const calleeIndex = functionIndices.get(callee);
                 if (calleeIndex === undefined)
                     assert.fail(`Function index not found for ${callee}`);
-                fs.writeSync(fd, `${first ? "\n  " : ", "}[${callerIndex}, ${calleeIndex}]`);
+                fs.writeSync(fd, `${first ? "\n  " : ", "}[${callerIndex}, ${calleeIndex}, ${caller.toJsonString()}, ${callee.toJsonString()}]`);
                 first = false;
             }
         fs.writeSync(fd, `${first ? "" : "\n "}],\n "call2fun": [`);
         first = true;
-        for (const [call, callIndex] of callIndices) {
+        for (const [call, _] of callIndices) {
             const funs = this.f.callToFunction.get(call) || [];
             const mods = this.f.callToModule.get(call) || [];
             for (const callee of [...funs, ...mods]) {
@@ -127,7 +127,11 @@ export class AnalysisStateReporter {
                 const calleeIndex = functionIndices.get(callee);
                 if (calleeIndex === undefined)
                     assert.fail(`Function index not found for ${callee}`);
-                fs.writeSync(fd, `${first ? "\n  " : ", "}[${callIndex}, ${calleeIndex}]`);
+                const callerFunc = this.f.callToContainingFunction.get(call);
+                if(callerFunc?.packageInfo.name === callee.packageInfo.name) {
+                    continue;
+                }
+                fs.writeSync(fd, `${first ? "\n  " : ", "}[${callerFunc?.toJsonString()}, ${callee.toJsonString()}]`);
                 first = false;
             }
         }

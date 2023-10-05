@@ -1,4 +1,4 @@
-import {FilePath, locationToString, strHash} from "../misc/util";
+import {FilePath, locationToJson, locationToString, strHash} from "../misc/util";
 import {Function, Program} from "@babel/types";
 import {sep} from "path";
 import assert from "assert";
@@ -32,6 +32,25 @@ export class PackageInfo {
 
     toString(): string {
         return `${this.name}${this.version ? `@${this.version}` : ""}`;
+    }
+    toJson(): any {
+        return {
+            name: this.name,
+            version: this.version,
+            main: this.main,
+            dir: this.dir,
+            isEntry: this.isEntry,
+        };
+    }
+
+    toJsonString(): string {
+        return JSON.stringify({
+            name: this.name,
+            version: this.version,
+            main: this.main,
+            dir: this.dir,
+            isEntry: this.isEntry,
+        }, null, 2);
     }
 }
 
@@ -68,6 +87,24 @@ export class ModuleInfo {
     toString(): string {
         assert(this.packageInfo !== undefined && this.relativePath !== undefined);
         return `${this.packageInfo}:${this.relativePath}`;
+    }
+
+    toJson(): any {
+        return {
+            relativePath: this.relativePath,
+            packageInfo: this.packageInfo.toJson(),
+            isEntry: this.isEntry,
+            hash: this.hash,
+        };
+    }
+
+    toJsonString(): string {
+        return JSON.stringify({
+            relativePath: this.relativePath,
+            packageInfo: this.packageInfo.toJson(),
+            isEntry: this.isEntry,
+            hash: this.hash,
+        }, null, 2);
     }
 
     /**
@@ -137,5 +174,18 @@ export class FunctionInfo {
 
     toString() {
         return `${this.moduleInfo}:${locationToString(this.node.loc)}:${this.name ?? "<anonymous>"}`;
+    }
+
+    toJsonString() {
+        return JSON.stringify({
+            name: this.name,
+            // params: JSON.parse(this.stringify(this.node.params)),
+            generator: this.node.generator,
+            async: this.node.async,
+            returnType: this.node.returnType?.type,
+            typeParameters: this.node.typeParameters,
+            loc: locationToJson(this.node.loc, true, true),
+            moduleInfo: this.moduleInfo.toJson(),
+        }, null, 2);
     }
 }
